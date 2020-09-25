@@ -4,7 +4,10 @@ import com.tradeix.contractcomposition.contracts.commands.FulfillRefInputsComman
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContracts
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContractsOfType
 import com.tradeix.contractcomposition.contracts.states.CompositeContractState
-import net.corda.core.contracts.*
+import net.corda.core.contracts.CommandData
+import net.corda.core.contracts.Contract
+import net.corda.core.contracts.StateRef
+import net.corda.core.contracts.requireThat
 import net.corda.core.transactions.LedgerTransaction
 
 /**
@@ -14,7 +17,7 @@ import net.corda.core.transactions.LedgerTransaction
  * if they are being created here.
  */
 
-open class CompositeContract: Contract {
+open class CompositeContract : Contract {
 
     interface CompositeContractCommands : CommandData
 
@@ -43,18 +46,17 @@ open class CompositeContract: Contract {
 
         if (tx.commandsOfType<FulfillCompositeContracts>().isEmpty()) return
 
-        val allFulfilledCompositeContracts =
-                getAllFulfilledContractsOfType<FulfillCompositeContracts, CompositeContractState>(tx)
+        val allFulfilledCompositeContracts = getAllFulfilledContractsOfType<FulfillCompositeContracts, CompositeContractState>(tx)
         val allFulfilledContractRefs = getAllFulfilledContracts(tx).map { it.ref }
 
         allFulfilledCompositeContracts.forEach {
             for (contract in it.state.data.contracts) {
-                if (contract.ref == null) {
-                    requireThat { contract.stateRef in allFulfilledContractRefs }
-                } else {
-                    val stateRefFromRef = StateRef(it.ref.txhash, contract.ref)
-                    requireThat { stateRefFromRef in allFulfilledContractRefs }
-                }
+                val stateRef = if (contract.ref != null)
+                    StateRef(it.ref.txhash, contract.ref)
+                else
+                    contract.stateRef
+
+                requireThat { stateRef in allFulfilledContractRefs }
             }
         }
     }

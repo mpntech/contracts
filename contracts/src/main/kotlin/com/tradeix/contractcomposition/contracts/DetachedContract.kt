@@ -29,12 +29,11 @@ class DetachedContract: Contract {
 
         val allFulfilledDetachedContracts =
                 getAllFulfilledContractsOfType<FulfillDetachedContracts, DetachedContractState>(tx)
-        // All those contracts for which we have proof here have already been fulfilled in some other transaction
-        val previouslyFulfilledContractRefs =
-                tx.referenceInputRefsOfType<FulfilledContractsState>().flatMap { it.state.data.fulfilledContracts }
 
-        allFulfilledDetachedContracts.forEach {
-            require(previouslyFulfilledContractRefs.contains(it.state.data.requiredFulfilledId.stateRef))
-        }
+        // All those contracts for which we have proof here have already been fulfilled in some other transaction
+        val previouslyFulfilledContractRefs = tx.referenceInputRefsOfType<FulfilledContractsState>()
+                .flatMap { it.state.data.fulfilledContracts }
+
+        require(allFulfilledDetachedContracts.all { it.state.data.requiredFulfilledId.stateRef in previouslyFulfilledContractRefs })
     }
 }
