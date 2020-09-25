@@ -7,7 +7,6 @@ import com.tradeix.contractcomposition.contracts.states.CompositeContractState
 import com.tradeix.contractcomposition.contracts.states.MultipathContractState
 import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
-import sun.rmi.rmic.iiop.InterfaceType
 import javax.security.auth.login.CredentialException
 
 

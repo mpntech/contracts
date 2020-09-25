@@ -13,12 +13,14 @@ import net.corda.core.transactions.LedgerTransaction
  * FulfillRefInputsCommand
  */
 fun getAllFulfilledContracts(tx: LedgerTransaction): List<StateAndRef<*>> {
-    val allFulfilledRefInputIndices = tx.commandsOfType<FulfillRefInputsCommand>().flatMap {
-        it.value.fulfilledRefInputIndices
-    }
+
+    val allFulfilledRefInputIndices = tx.commandsOfType<FulfillRefInputsCommand>()
+            .flatMap { it.value.fulfilledRefInputIndices }
+
     val allFulfilledRefInputs =
             if (allFulfilledRefInputIndices.isNotEmpty()) {
-                tx.referenceInputRefsOfType<ContractState>().filterIndexed { index, _ -> index in allFulfilledRefInputIndices }
+                tx.referenceInputRefsOfType<ContractState>()
+                        .filterIndexed { index, _ -> index in allFulfilledRefInputIndices }
             } else listOf()
 
     return tx.inRefsOfType<ContractState>() + allFulfilledRefInputs
