@@ -3,11 +3,11 @@ package com.tradeix.contractcomposition.contracts
 import com.tradeix.contractcomposition.contracts.commands.FulfillRefInputsCommand
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContracts
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContractsOfType
-import com.tradeix.contractcomposition.contracts.states.CompositeContractState
 import com.tradeix.contractcomposition.contracts.states.MultipathContractState
-import net.corda.core.contracts.*
+import net.corda.core.contracts.CommandData
+import net.corda.core.contracts.Contract
+import net.corda.core.contracts.StateRef
 import net.corda.core.transactions.LedgerTransaction
-import javax.security.auth.login.CredentialException
 
 
 /**
@@ -16,7 +16,7 @@ import javax.security.auth.login.CredentialException
  * to branch their execution logic (e.g. collateral as part of an obligation will have multiple execution options)
  */
 
-class MultipathContract: Contract {
+class MultipathContract : Contract {
 
     interface MultipathCommands : CommandData
 
@@ -27,7 +27,8 @@ class MultipathContract: Contract {
      */
     data class FulfillMultipathContracts(
             override val fulfilledRefInputIndices: List<Int>,
-            val fulfilledPaths: Map<StateRef, Int> = mapOf()) : FulfillRefInputsCommand, MultipathCommands
+            val fulfilledPaths: Map<StateRef, Int> = mapOf()
+    ) : FulfillRefInputsCommand, MultipathCommands
 
     override fun verify(tx: LedgerTransaction) {
 
@@ -39,21 +40,19 @@ class MultipathContract: Contract {
 
         val allFulfilledMultipathContracts =
                 getAllFulfilledContractsOfType<FulfillMultipathContracts, MultipathContractState>(tx)
+
         val allFulfilledContractRefs = getAllFulfilledContracts(tx).map { it.ref }
 
         // Check that for each fulfilled Multipath, there is a path specified and the contract in that path is fulfilled
-        allFulfilledMultipathContracts.forEach {
-            val takenPath = fulfilledPaths[it.ref]
-                    ?: error("No path provided for fulfilled Multipath with StateRef ${it.ref}")
-            val contract = it.state.data.contracts[takenPath]
-            if (contract.ref == null) {
-                requireThat { contract.stateRef in allFulfilledContractRefs }
-            } else {
-                val stateRefFromRef = StateRef(it.ref.txhash, contract.ref)
-                requireThat { stateRefFromRef in allFulfilledContractRefs }
-            }
-        }
+        allFulfilledMultipathContracts
+                .map {
+                    val takenPath = fulfilledPaths[it.ref]
+                            ?: error("No path provided for fulfilled Multipath with StateRef ${it.ref}")
+
+                    val contract = it.state.data.contracts[takenPath]
+                    if (contract.ref != null) StateRef(it.ref.txhash, contract.ref) else contract.stateRef
+                }
+                .all { it in allFulfilledContractRefs }
+                .also { require(it) }
     }
 }
-
-val x = {y: List<Any> -> ((y[0] as Int > y[1] as Int))}

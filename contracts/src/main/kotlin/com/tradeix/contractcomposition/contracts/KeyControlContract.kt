@@ -30,11 +30,9 @@ class KeyControlContract: Contract {
         if (tx.commandsOfType<FulfillKeyControlContracts>().isEmpty()) return
 
         val signers = tx.commands.flatMap { it.signers }
-        val allFulfilledKeyControlStates =
-                getAllFulfilledContractsOfType<FulfillKeyControlContracts, KeyControlState>(tx)
 
-        allFulfilledKeyControlStates.forEach {
-            require(it.state.data.key.owningKey in signers)
-        }
+        val allFulfilledKeyControlStates = getAllFulfilledContractsOfType<FulfillKeyControlContracts, KeyControlState>(tx)
+
+        require(allFulfilledKeyControlStates.all { it.state.data.key.owningKey in signers })
     }
 }

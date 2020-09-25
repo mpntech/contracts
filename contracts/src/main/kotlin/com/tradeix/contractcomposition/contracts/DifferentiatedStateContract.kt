@@ -3,7 +3,6 @@ package com.tradeix.contractcomposition.contracts
 import com.tradeix.contractcomposition.contracts.commands.FulfillRefInputsCommand
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContracts
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContractsOfType
-import com.tradeix.contractcomposition.contracts.states.CompositeContractState
 import com.tradeix.contractcomposition.contracts.states.DifferentiatedState
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
@@ -18,7 +17,7 @@ import net.corda.core.transactions.LedgerTransaction
  * fulfilled contracts since there only can be a single one.
  */
 
-class DifferentiatedStateContract: Contract {
+class DifferentiatedStateContract : Contract {
 
     interface DifferentiatedContractCommands : CommandData
 
@@ -30,16 +29,15 @@ class DifferentiatedStateContract: Contract {
 
         val allFulfilledDifferentiatedContracts =
                 getAllFulfilledContractsOfType<FulfillDifferentiatedContracts, DifferentiatedState<*>>(tx)
+
         val allFulfilledContractRefs = getAllFulfilledContracts(tx).map { it.ref }
 
         allFulfilledDifferentiatedContracts.forEach {
             val contract = it.state.data.contract
-            if (contract.ref == null) {
-                requireThat { contract.stateRef in allFulfilledContractRefs }
-            } else {
-                val stateRefFromRef = StateRef(it.ref.txhash, contract.ref)
-                requireThat { stateRefFromRef in allFulfilledContractRefs }
-            }
+
+            val stateRef = if (contract.ref != null) StateRef(it.ref.txhash, contract.ref) else contract.stateRef
+
+            requireThat { stateRef in allFulfilledContractRefs }
         }
     }
 }

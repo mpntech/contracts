@@ -1,7 +1,6 @@
 package com.tradeix.contractcomposition.contracts
 
 import com.tradeix.contractcomposition.contracts.states.DummyPaymentState
-import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.transactions.LedgerTransaction
 
@@ -14,16 +13,15 @@ import net.corda.core.transactions.LedgerTransaction
  * they may. Whether or not such a claim would be helpful in any capacity is determined by other states and contracts
  */
 
-class DummyPaymentContract: Contract {
+class DummyPaymentContract : Contract {
 
     override fun verify(tx: LedgerTransaction) {
         // DummyPaymentStates can only ever be created so we don't need to do any checks on commands or their types
 
         // The party who claims payment has been made (the "payor") must sign the transaction to make that claim.
         val signers = tx.commands.flatMap { it.signers }
-        tx.outputsOfType<DummyPaymentState>().forEach {
-            it.payor.owningKey in signers
-        }
+
+        require(tx.outputsOfType<DummyPaymentState>().all { it.payor.owningKey in signers })
     }
 
 }

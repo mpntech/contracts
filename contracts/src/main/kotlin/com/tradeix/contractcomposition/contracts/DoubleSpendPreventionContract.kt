@@ -3,10 +3,12 @@ package com.tradeix.contractcomposition.contracts
 import com.tradeix.contractcomposition.contracts.commands.FulfillRefInputsCommand
 import com.tradeix.contractcomposition.contracts.common.getAllFulfilledContractsOfType
 import com.tradeix.contractcomposition.contracts.states.DoubleSpendPreventionState
-import net.corda.core.contracts.*
+import net.corda.core.contracts.Contract
+import net.corda.core.contracts.StateRef
+import net.corda.core.contracts.requireThat
 import net.corda.core.transactions.LedgerTransaction
 
-class DoubleSpendPreventionContract: Contract {
+class DoubleSpendPreventionContract : Contract {
 
     class FulfillDSPRefInputs(override val fulfilledRefInputIndices: List<Int>) : FulfillRefInputsCommand
 
@@ -25,12 +27,8 @@ class DoubleSpendPreventionContract: Contract {
         // Check that all the states which need to be notarized are included in the inputs list
         allFulfilledDSPContracts.forEach {
             for (contract in it.state.data.statesToNotarize) {
-                if (contract.ref == null) {
-                    requireThat { contract.stateRef in allNotarizedStateRefs }
-                } else {
-                    val stateRefFromRef = StateRef(it.ref.txhash, contract.ref)
-                    requireThat { stateRefFromRef in allNotarizedStateRefs }
-                }
+                val stateRef = if (contract.ref != null) StateRef(it.ref.txhash, contract.ref) else contract.stateRef
+                requireThat { stateRef in allNotarizedStateRefs }
             }
         }
     }
