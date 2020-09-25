@@ -1,6 +1,7 @@
 //apply plugin: 'net.corda.plugins.cordapp'
 //apply plugin: 'net.corda.plugins.quasar-utils'
 plugins {
+    id "kotlin"
     id "net.corda.plugins.cordapp"
     id "net.corda.plugins.quasar-utils"
 }
@@ -54,3 +55,13 @@ test {
 //    testClassesDirs = sourceSets.integrationTest.output.classesDirs
 //    classpath = sourceSets.integrationTest.runtimeClasspath
 //}
+
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    kotlinOptions {
+        languageVersion = "1.2"
+        apiVersion = "1.2"
+        jvmTarget = "1.8"
+        javaParameters = true
+    }
+}
